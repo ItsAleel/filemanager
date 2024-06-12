@@ -56,16 +56,20 @@ class GeneralSettingsTab(QWidget):
             QMessageBox.warning(self, "Error", f"An error occurred while saving settings: {str(e)}")
 
     def load_settings(self):
-        if os.path.exists(SETTINGS_FILE):
-            try:
-                with open(SETTINGS_FILE, 'r') as f:
-                    settings = json.load(f)
-                self.general_setting_input.setText(settings.get('general_setting', ''))
-                QMessageBox.information(self, "Settings Loaded", "Settings have been loaded successfully.")
-            except Exception as e:
-                QMessageBox.warning(self, "Error", f"An error occurred while loading settings: {str(e)}")
-        else:
-            QMessageBox.information(self, "No Settings", "No settings file found. Please save settings first.")
+        errors = []
+        try:
+            if not os.path.exists(SETTINGS_FILE):
+                os.makedirs(os.path.dirname(SETTINGS_FILE), exist_ok=True)
+                with open(SETTINGS_FILE, 'w') as f:
+                    json.dump({}, f)
+            with open(SETTINGS_FILE, 'r') as f:
+                settings = json.load(f)
+            self.general_setting_input.setText(settings.get('general_setting', ''))
+        except Exception as e:
+            errors.append(f"An error occurred while loading settings: {str(e)}")
+
+        if errors:
+            QMessageBox.warning(self, "Error", "\n".join(errors))
 
 class AiSettingsTab(QWidget):
     def __init__(self, parent=None):
@@ -113,16 +117,22 @@ class AiSettingsTab(QWidget):
             QMessageBox.warning(self, "Error", f"An error occurred while saving the API key: {str(e)}")
 
     def load_api_key(self):
-        if os.path.exists(SECRET_ENV_FILE):
+        errors = []
+        try:
+            if not os.path.exists(SECRET_ENV_FILE):
+                os.makedirs(os.path.dirname(SECRET_ENV_FILE), exist_ok=True)
+                with open(SECRET_ENV_FILE, 'w') as f:
+                    f.write('')
             load_dotenv(SECRET_ENV_FILE)
             api_key = os.getenv('GROQ_API_KEY', '')
             self.api_key_input.setText(api_key)
-            if api_key:
-                QMessageBox.information(self, "API Key Loaded", "API key has been loaded successfully.")
-            else:
-                QMessageBox.warning(self, "Error", "No API key found in the .env file.")
-        else:
-            QMessageBox.information(self, "No API Key", "No API key file found. Please save the API key first.")
+            if not api_key:
+                errors.append("No API key found in the .env file.")
+        except Exception as e:
+            errors.append(f"An error occurred while loading the API key: {str(e)}")
+
+        if errors:
+            QMessageBox.warning(self, "Error", "\n".join(errors))
 
 class Settings(QWidget):
     def __init__(self, parent=None):
