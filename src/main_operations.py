@@ -5,7 +5,7 @@ from tree_view_widget import TreeViewWidget
 from main_content_widget import MainContentWidget
 
 class MainOperations(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, console_tab=None):
         super().__init__(parent)
         self.layout = QVBoxLayout(self)
         self.splitter = QSplitter(Qt.Orientation.Horizontal, self)
@@ -36,7 +36,7 @@ class MainOperations(QWidget):
 
         # Initialize Tree View and Main Content
         self.tree_view = TreeViewWidget(self)
-        self.main_content = MainContentWidget(self)
+        self.main_content = MainContentWidget(self, console_tab)  # Pass console_tab to MainContentWidget
 
         # Add widgets to splitter
         self.splitter.addWidget(self.tree_view)

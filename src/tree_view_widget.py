@@ -8,6 +8,7 @@ class TreeViewWidget(QWidget):
     file_double_clicked = pyqtSignal(str)
     dir_changed = pyqtSignal(str)
     file_selected = pyqtSignal(str)
+    directory_selected = pyqtSignal(str)  # New signal for directory selection
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -57,7 +58,9 @@ class TreeViewWidget(QWidget):
         indexes = self.tree.selectionModel().selectedIndexes()
         if indexes:
             path = self.model.filePath(indexes[0])
-            if os.path.isfile(path):
+            if os.path.isdir(path):
+                self.directory_selected.emit(path)  # Emit directory path
+            elif os.path.isfile(path):
                 self.file_selected.emit(path)
 
     def open_context_menu(self, position):

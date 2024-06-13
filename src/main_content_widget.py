@@ -5,9 +5,10 @@ from PyQt6.QtGui import QPixmap, QIcon
 from PyQt6.QtCore import QDir, QTimer, Qt
 from file_structure import FileStructure
 from ai_assist import AIAssist
+from tree_view_widget import TreeViewWidget
 
 class MainContentWidget(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, console_tab=None):
         super().__init__(parent)
 
         self.layout = QVBoxLayout(self)
@@ -30,11 +31,14 @@ class MainContentWidget(QWidget):
 
         self.current_file_path = None
         self.selected_file_path = None
+        self.current_directory = QDir.currentPath()  # Initialize current directory
         self.setup_auto_save()
 
         self.is_ai_assist = False
         self.file_structure = FileStructure(self.status_bar)
-        self.ai_assist = AIAssist(self.status_bar)
+        self.ai_assist = AIAssist(self.status_bar, console_tab)  # Pass console_tab as the logger
+        self.tree_view_widget = TreeViewWidget()
+        self.tree_view_widget.directory_selected.connect(self.on_directory_selected)
 
     def setup_image_viewer(self):
         self.scroll_area = QScrollArea(self)
@@ -131,9 +135,7 @@ class MainContentWidget(QWidget):
 
     def ai_import_code_into_file(self):
         code = self.text_editor.toPlainText()
-        file_path = self.ai_assist.ai_import_code_into_file(code)
-        if file_path:
-            self.selected_file_path = file_path
+        self.ai_assist.ai_import_code_into_file(code, self.current_directory)
 
     def set_base_path(self, path):
         self.file_structure.set_base_path(path)
@@ -141,6 +143,10 @@ class MainContentWidget(QWidget):
 
     def set_selected_file_path(self, path):
         self.selected_file_path = path
+
+    def on_directory_selected(self, path):
+        self.current_directory = path
+        self.ai_assist.set_current_directory(path)  # Update the current directory in AI Assist
 
     def select_file(self):
         options = QFileDialog.Option.DontUseNativeDialog
@@ -153,7 +159,7 @@ class MainContentWidget(QWidget):
         structure = self.text_editor.toPlainText()
         if self.is_ai_assist:
             print("Using AI Assist to create file structure")  # Debugging
-            self.ai_assist.ai_create_file_structure(structure)
+            self.ai_assist.ai_create_file_structure(structure, self.current_directory)
         else:
             print("Using manual method to create file structure")  # Debugging
             self.file_structure.create_file_structure(structure)
