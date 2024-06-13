@@ -3,8 +3,8 @@
 import os
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QSplitter, QPushButton, QLineEdit, QComboBox, QHBoxLayout, QMessageBox
-from tree_view_widget import TreeViewWidget
-from main_content_widget import MainContentWidget
+from ui.tree_view_widget import TreeViewWidget
+from ui.main_content_widget import MainContentWidget
 
 class MainOperations(QWidget):
     def __init__(self, parent=None, console_tab=None):

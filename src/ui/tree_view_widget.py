@@ -4,7 +4,7 @@ import os
 from PyQt6.QtWidgets import QTreeView, QVBoxLayout, QWidget, QMenu, QInputDialog, QMessageBox, QLineEdit, QProgressBar
 from PyQt6.QtCore import QDir, Qt, pyqtSignal
 from PyQt6.QtGui import QCursor, QAction, QFileSystemModel
-from search_thread import SearchThread
+from utils.search_thread import SearchThread
 
 class TreeViewWidget(QWidget):
     file_double_clicked = pyqtSignal(str)

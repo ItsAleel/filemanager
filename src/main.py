@@ -1,9 +1,9 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QMainWindow, QStatusBar, QTabWidget
-from main_operations import MainOperations
-from settings import Settings
-from console_tab import ConsoleTab
-from info import InfoTab  # Import InfoTab from the new file
+from core.main_operations import MainOperations
+from core.settings import Settings
+from ui.console_tab import ConsoleTab
+from core.info import InfoTab  # Import InfoTab from the new file
 
 class FileManager(QMainWindow):
     def __init__(self):

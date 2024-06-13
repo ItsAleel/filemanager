@@ -1,3 +1,5 @@
+# src/core/settings.py
+
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel, QMessageBox, QTabWidget, QGroupBox, QFormLayout, QHBoxLayout)
 from PyQt6.QtGui import QIcon
 import json
@@ -6,8 +8,10 @@ from dotenv import load_dotenv, set_key
 
 # Constants for file paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-SETTINGS_FILE = os.path.join(BASE_DIR, 'settings', 'settings.json')
-SECRET_ENV_FILE = os.path.join(BASE_DIR, 'settings', 'secret', '.env')
+SETTINGS_DIR = os.path.join(BASE_DIR, '../settings')
+SECRET_ENV_DIR = os.path.join(BASE_DIR, '../settings/secret')
+SETTINGS_FILE = os.path.join(SETTINGS_DIR, 'settings.json')
+SECRET_ENV_FILE = os.path.join(SECRET_ENV_DIR, '.env')
 
 class GeneralSettingsTab(QWidget):
     def __init__(self, parent=None):

@@ -3,9 +3,9 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QTabWidget, QTextEdit, QPushB
                              QMessageBox, QFileDialog, QStatusBar, QHBoxLayout, QCheckBox)
 from PyQt6.QtGui import QPixmap, QIcon
 from PyQt6.QtCore import QDir, QTimer, Qt
-from file_structure import FileStructure
-from ai_assist import AIAssist
-from tree_view_widget import TreeViewWidget
+from utils.file_structure import FileStructure
+from ai.ai_assist import AIAssist
+from ui.tree_view_widget import TreeViewWidget
 
 class MainContentWidget(QWidget):
     def __init__(self, parent=None, console_tab=None):
