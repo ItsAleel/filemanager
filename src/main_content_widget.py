@@ -137,10 +137,6 @@ class MainContentWidget(QWidget):
         code = self.text_editor.toPlainText()
         self.ai_assist.ai_import_code_into_file(code, self.current_directory)
 
-    def set_base_path(self, path):
-        self.file_structure.set_base_path(path)
-        self.ai_assist.set_base_path(path)  # Ensure AI Assist uses the same base path
-
     def set_selected_file_path(self, path):
         self.selected_file_path = path
 

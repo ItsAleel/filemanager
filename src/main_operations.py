@@ -1,3 +1,5 @@
+# main_operations.py
+
 import os
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QSplitter, QPushButton, QLineEdit, QComboBox, QHBoxLayout, QMessageBox
@@ -52,7 +54,7 @@ class MainOperations(QWidget):
         self.tree_view.file_double_clicked.connect(self.main_content.display_content)
         self.tree_view.dir_changed.connect(self.update_directory_input)
         self.tree_view.dir_changed.connect(self.clear_search_bar)
-        self.tree_view.dir_changed.connect(self.main_content.set_base_path)
+        self.tree_view.dir_changed.connect(self.on_directory_changed)  # Updated to use on_directory_changed
         self.tree_view.file_selected.connect(self.main_content.set_selected_file_path)
         self.search_bar.textChanged.connect(self.on_search_text_changed)
         self.back_button.clicked.connect(self.go_back)
@@ -95,3 +97,7 @@ class MainOperations(QWidget):
 
     def clear_search_bar(self, path):
         self.search_bar.clear()
+
+    def on_directory_changed(self, path):
+        self.main_content.current_directory = path  # Directly update current_directory attribute
+        self.main_content.ai_assist.set_current_directory(path)  # Update the current directory in AI Assist

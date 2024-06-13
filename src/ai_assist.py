@@ -14,10 +14,9 @@ class AIWorker(QObject):
     result = pyqtSignal(str)
     log = pyqtSignal(str)
 
-    def __init__(self, api_key, project_base_path, current_directory, code, prompt_template):
+    def __init__(self, api_key, current_directory, code, prompt_template):
         super().__init__()
         self.api_key = api_key
-        self.project_base_path = project_base_path
         self.current_directory = current_directory
         self.code = code
         self.prompt_template = prompt_template
@@ -26,7 +25,6 @@ class AIWorker(QObject):
         try:
             client = Groq(api_key=self.api_key)
             prompt = self.prompt_template.format(
-                project_base_path=self.project_base_path,
                 current_directory=self.current_directory,
                 code=self.code
             )
@@ -37,7 +35,8 @@ class AIWorker(QObject):
                         "role": "system",
                         "content": (
                             "You are a helpful assistant. When provided with code, "
-                            "you must respond with the relative file path where the code should be placed."
+                            "you must respond with the relative file path where the code should be placed. "
+                            "Respond only with the relative file path and nothing else."
                         )
                     },
                     {
@@ -56,8 +55,8 @@ class AIWorker(QObject):
             full_path = os.path.normpath(os.path.join(self.current_directory, relative_file_path))
             self.log.emit(f"Full path to write code: {full_path}")
             
-            if not full_path.startswith(self.project_base_path):
-                raise ValueError(f"Invalid file path received from AI assist: '{relative_file_path}' is outside the project base path.")
+            if not full_path.startswith(self.current_directory):
+                raise ValueError(f"Invalid file path received from AI assist: '{relative_file_path}' is outside the current directory.")
             
             if not os.path.exists(full_path):
                 raise FileNotFoundError(f"File does not exist: {full_path}")
@@ -103,12 +102,8 @@ class AIAssist:
         self.console_logger = console_logger
         load_dotenv(os.path.join(os.path.dirname(__file__), 'settings', 'secret', '.env'))
         self.api_key = os.getenv('GROQ_API_KEY')
-        self.project_base_path = QDir.currentPath()
-        self.current_directory = self.project_base_path
+        self.current_directory = QDir.currentPath()
         self.thread = None
-
-    def set_base_path(self, path):
-        self.project_base_path = os.path.abspath(path)
 
     def set_current_directory(self, path):
         self.current_directory = os.path.abspath(path)
@@ -116,27 +111,25 @@ class AIAssist:
     def log(self, message):
         self.console_logger.log_message(message)
 
-    def ai_import_code_into_file(self, code, directory):
+    def ai_import_code_into_file(self, code, current_directory):
         prompt_template = (
-            "The project base path is: {project_base_path}\n"
-            "The current working directory is: {current_directory}\n"
-            "Please provide the relative file path (relative to the current working directory) where the following code should be placed.\n"
+            "The current directory is: {current_directory}\n"
+            "Please provide the relative file path (relative to the current directory) where the following code should be placed.\n"
             "Code:\n{code}\n"
-            "Respond with the relative file path only."
+            "Respond with the relative file path only. Do not include any other text."
         )
-        self._run_ai_task(code, directory, prompt_template)
+        self._run_ai_task(code, current_directory, prompt_template)
 
-    def ai_create_file_structure(self, structure, directory):
+    def ai_create_file_structure(self, structure, current_directory):
         prompt_template = (
-            "The project base path is: {project_base_path}\n"
-            "The current working directory is: {current_directory}\n"
+            "The current directory is: {current_directory}\n"
             "Convert the following description into a valid file directory structure within the current directory, "
             "with each directory and file on a new line, properly formatted with full paths:\n\n{structure}"
         )
-        self._run_ai_task(structure, directory, prompt_template)
+        self._run_ai_task(structure, current_directory, prompt_template)
 
-    def _run_ai_task(self, content, directory, prompt_template):
-        self.worker = AIWorker(self.api_key, self.project_base_path, directory, content, prompt_template)
+    def _run_ai_task(self, content, current_directory, prompt_template):
+        self.worker = AIWorker(self.api_key, current_directory, content, prompt_template)
         self.thread = QThread()
         self.worker.moveToThread(self.thread)
 
