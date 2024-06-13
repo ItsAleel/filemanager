@@ -99,9 +99,11 @@ dmypy.json
 *.pyo
 
 # Project specific
-settings/secret/.env
-settings/secret/*.env
 settings/settings.json
+
+# Include settings/secret/ folder but exclude specific files within it
+!settings/secret/
+settings/secret/*.env
 
 # Ignore VS Code settings
 .vscode/
