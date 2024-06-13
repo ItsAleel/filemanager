@@ -1,5 +1,3 @@
-# ai_assist.py
-
 import os
 import re
 import threading
@@ -51,7 +49,7 @@ class AIWorker(QObject):
             response = chat_completion.choices[0].message.content.strip()
             self.log.emit(f"Response from AI:\n{response}")
 
-            relative_file_path = self._sanitize_path(response)
+            relative_file_path = self._extract_file_path(response)
             full_path = os.path.normpath(os.path.join(self.current_directory, relative_file_path))
             self.log.emit(f"Full path to write code: {full_path}")
 
@@ -76,6 +74,16 @@ class AIWorker(QObject):
         if not re.match(r'^[\w\-. /\\]+$', path):
             raise ValueError(f"Invalid file path received from AI assist: '{path}'")
         return path
+
+    def _extract_file_path(self, response):
+        # Use a regex to find the first valid file path in the response
+        match = re.search(r'[\w\-. /\\]+(\.[\w]{2,})?', response)
+        if match:
+            # Ensure we only get the filename without extra text
+            extracted_path = match.group(0).strip()
+            return self._sanitize_path(extracted_path)
+        else:
+            raise ValueError(f"No valid file path found in AI response: '{response}'")
 
     def _is_path_within_directory(self, path, directory):
         # Ensure the given path is within the specified directory
