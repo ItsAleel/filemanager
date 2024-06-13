@@ -54,8 +54,8 @@ class AIWorker(QObject):
             relative_file_path = self._sanitize_path(response)
             full_path = os.path.normpath(os.path.join(self.current_directory, relative_file_path))
             self.log.emit(f"Full path to write code: {full_path}")
-            
-            if not full_path.startswith(self.current_directory):
+
+            if not self._is_path_within_directory(full_path, self.current_directory):
                 raise ValueError(f"Invalid file path received from AI assist: '{relative_file_path}' is outside the current directory.")
             
             if not os.path.exists(full_path):
@@ -72,10 +72,16 @@ class AIWorker(QObject):
     def _sanitize_path(self, path):
         if os.path.isabs(path):
             path = os.path.relpath(path, self.current_directory)
-        path = os.path.normpath(path)
+        path = os.path.normpath(path).replace("\\_", "_")  # Replace incorrect backslashes
         if not re.match(r'^[\w\-. /\\]+$', path):
             raise ValueError(f"Invalid file path received from AI assist: '{path}'")
         return path
+
+    def _is_path_within_directory(self, path, directory):
+        # Ensure the given path is within the specified directory
+        abs_path = os.path.abspath(path)
+        abs_directory = os.path.abspath(directory)
+        return abs_path.startswith(abs_directory)
 
     def _append_code_to_file(self, path, code):
         try:
