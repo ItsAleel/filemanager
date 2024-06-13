@@ -1,3 +1,5 @@
+# ai_assist.py
+
 import os
 import re
 import threading
@@ -53,6 +55,13 @@ class AIWorker(QObject):
             relative_file_path = self._sanitize_path(response)
             full_path = os.path.normpath(os.path.join(self.current_directory, relative_file_path))
             self.log.emit(f"Full path to write code: {full_path}")
+            
+            if not full_path.startswith(self.project_base_path):
+                raise ValueError(f"Invalid file path received from AI assist: '{relative_file_path}' is outside the project base path.")
+            
+            if not os.path.exists(full_path):
+                raise FileNotFoundError(f"File does not exist: {full_path}")
+            
             self._append_code_to_file(full_path, self.code)
 
             self.result.emit(full_path)
@@ -64,26 +73,24 @@ class AIWorker(QObject):
     def _sanitize_path(self, path):
         if os.path.isabs(path):
             path = os.path.relpath(path, self.current_directory)
+        path = os.path.normpath(path)
         if not re.match(r'^[\w\-. /\\]+$', path):
             raise ValueError(f"Invalid file path received from AI assist: '{path}'")
         return path
 
     def _append_code_to_file(self, path, code):
-        if not os.path.exists(path):
-            raise FileNotFoundError(f"File does not exist: {path}")
-
         try:
             lock = threading.Lock()
             with lock:
                 with open(path, 'a+', encoding='utf-8') as file:
                     file.seek(0)
                     original_content = file.read()
+                    self.log.emit(f"Original content of the file: {original_content}")
                     file.write(f"\n{code}\n")
-                self.log.emit(f"Code successfully appended to file: {path}")
-
-                # Verify that the code has been appended correctly
+                    self.log.emit(f"Appended code to file: {code}")
                 with open(path, 'r', encoding='utf-8') as file:
                     contents = file.read()
+                    self.log.emit(f"Final content of the file: {contents}")
                     if f"\n{code}\n" not in contents[len(original_content):]:
                         raise IOError("Code was not appended correctly.")
         except Exception as e:
@@ -101,10 +108,10 @@ class AIAssist:
         self.thread = None
 
     def set_base_path(self, path):
-        self.project_base_path = path
+        self.project_base_path = os.path.abspath(path)
 
     def set_current_directory(self, path):
-        self.current_directory = path
+        self.current_directory = os.path.abspath(path)
 
     def log(self, message):
         self.console_logger.log_message(message)
