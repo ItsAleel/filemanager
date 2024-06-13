@@ -75,14 +75,16 @@ class AIWorker(QObject):
         try:
             lock = threading.Lock()
             with lock:
-                with open(path, 'a', encoding='utf-8') as file:
+                with open(path, 'a+', encoding='utf-8') as file:
+                    file.seek(0)
+                    original_content = file.read()
                     file.write(f"\n{code}\n")
                 self.log.emit(f"Code successfully appended to file: {path}")
 
                 # Verify that the code has been appended correctly
                 with open(path, 'r', encoding='utf-8') as file:
                     contents = file.read()
-                    if code not in contents:
+                    if f"\n{code}\n" not in contents[len(original_content):]:
                         raise IOError("Code was not appended correctly.")
         except Exception as e:
             self.log.emit(f"Error appending code to file: {e}")
