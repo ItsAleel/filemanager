@@ -1,10 +1,8 @@
-import sys
 import os
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QSplitter, QPushButton, QLineEdit, QComboBox, QHBoxLayout, QMessageBox
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QSplitter, QPushButton, QLineEdit, QComboBox, QHBoxLayout, QMessageBox
 from tree_view_widget import TreeViewWidget
 from main_content_widget import MainContentWidget
-from search import SearchFilterProxyModel
 
 class MainOperations(QWidget):
     def __init__(self, parent=None):
@@ -54,6 +52,8 @@ class MainOperations(QWidget):
         self.tree_view.file_double_clicked.connect(self.main_content.display_content)
         self.tree_view.dir_changed.connect(self.update_directory_input)
         self.tree_view.dir_changed.connect(self.clear_search_bar)
+        self.tree_view.dir_changed.connect(self.main_content.set_base_path)
+        self.tree_view.file_selected.connect(self.main_content.set_selected_file_path)
         self.search_bar.textChanged.connect(self.on_search_text_changed)
         self.back_button.clicked.connect(self.go_back)
         self.drive_selector.currentIndexChanged.connect(self.on_drive_selected)
@@ -95,9 +95,3 @@ class MainOperations(QWidget):
 
     def clear_search_bar(self, path):
         self.search_bar.clear()
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    window = MainOperations()
-    window.show()
-    sys.exit(app.exec())

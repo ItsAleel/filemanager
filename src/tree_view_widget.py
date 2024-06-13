@@ -2,11 +2,12 @@ import os
 from PyQt6.QtWidgets import QTreeView, QVBoxLayout, QWidget, QMenu, QInputDialog, QMessageBox, QLineEdit, QProgressBar
 from PyQt6.QtCore import QDir, Qt, pyqtSignal
 from PyQt6.QtGui import QCursor, QAction, QFileSystemModel
-from search_thread import SearchThread  # Import the SearchThread
+from search_thread import SearchThread
 
 class TreeViewWidget(QWidget):
     file_double_clicked = pyqtSignal(str)
-    dir_changed = pyqtSignal(str)  # Signal to emit when the directory changes
+    dir_changed = pyqtSignal(str)
+    file_selected = pyqtSignal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -22,6 +23,7 @@ class TreeViewWidget(QWidget):
         self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self.open_context_menu)
         self.tree.doubleClicked.connect(self.on_double_click)
+        self.tree.selectionModel().selectionChanged.connect(self.on_selection_changed)
         self.tree.setColumnHidden(1, True)
         self.tree.setColumnHidden(2, True)
         self.tree.setColumnHidden(3, True)
@@ -33,7 +35,7 @@ class TreeViewWidget(QWidget):
         self.layout.addWidget(self.progress_bar)
         self.setLayout(self.layout)
 
-        self.search_thread = None  # Initialize the search thread
+        self.search_thread = None
 
     def setModel(self, model):
         self.tree.setModel(model)
@@ -42,7 +44,7 @@ class TreeViewWidget(QWidget):
         if os.path.exists(path):
             self.model.setRootPath(path)
             self.tree.setRootIndex(self.model.index(path))
-            self.dir_changed.emit(path)  # Emit signal when the directory changes
+            self.dir_changed.emit(path)
 
     def on_double_click(self, index):
         path = self.model.filePath(index)
@@ -50,6 +52,13 @@ class TreeViewWidget(QWidget):
             self.set_root_directory(path)
         elif os.path.isfile(path):
             self.file_double_clicked.emit(path)
+
+    def on_selection_changed(self, selected, deselected):
+        indexes = self.tree.selectionModel().selectedIndexes()
+        if indexes:
+            path = self.model.filePath(indexes[0])
+            if os.path.isfile(path):
+                self.file_selected.emit(path)
 
     def open_context_menu(self, position):
         indexes = self.tree.selectedIndexes()
@@ -71,15 +80,15 @@ class TreeViewWidget(QWidget):
 
     def delete_item(self, index):
         path = self.model.filePath(index)
-        reply = QMessageBox.question(self, "Delete", f"Are you sure you want to delete {path}?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if reply == QMessageBox.Yes:
+        reply = QMessageBox.question(self, "Delete", f"Are you sure you want to delete {path}?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
             try:
                 if os.path.isdir(path):
                     os.rmdir(path)
                 else:
                     os.remove(path)
                 QMessageBox.information(self, "Deleted", f"{path} has been deleted.")
-                self.model.setRootPath(self.model.rootPath())  # Refresh the model
+                self.model.setRootPath(self.model.rootPath())
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Could not delete {path}. Error: {e}")
 
@@ -91,7 +100,7 @@ class TreeViewWidget(QWidget):
             try:
                 os.rename(path, new_path)
                 QMessageBox.information(self, "Renamed", f"{path} has been renamed to {new_name}.")
-                self.model.setRootPath(self.model.rootPath())  # Refresh the model
+                self.model.setRootPath(self.model.rootPath())
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Could not rename {path}. Error: {e}")
 
@@ -106,5 +115,4 @@ class TreeViewWidget(QWidget):
 
     def on_search_complete(self, matches):
         self.progress_bar.setVisible(False)
-        # You can update the tree view or handle the matches as needed
         print("Search complete:", matches)

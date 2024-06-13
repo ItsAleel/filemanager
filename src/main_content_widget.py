@@ -1,17 +1,10 @@
 import os
-import sys
-from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QTabWidget, QTextEdit, QPushButton, QLabel, QScrollArea,
-                             QMessageBox, QFileDialog, QStatusBar, QHBoxLayout, QApplication)
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QTabWidget, QTextEdit, QPushButton, QLabel, QScrollArea,
+                             QMessageBox, QFileDialog, QStatusBar, QHBoxLayout, QCheckBox)
 from PyQt6.QtGui import QPixmap, QIcon
 from PyQt6.QtCore import QDir, QTimer, Qt
-
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowFlags(Qt.WindowType.Window | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint | Qt.WindowType.WindowMinimizeButtonHint | Qt.WindowType.WindowMaximizeButtonHint)
-        self.setWindowTitle("File Manager")
-        self.main_widget = MainContentWidget(self)
-        self.setCentralWidget(self.main_widget)
+from file_structure import FileStructure
+from ai_assist import AIAssist
 
 class MainContentWidget(QWidget):
     def __init__(self, parent=None):
@@ -36,7 +29,12 @@ class MainContentWidget(QWidget):
         self.setup_bottom_right_buttons()
 
         self.current_file_path = None
+        self.selected_file_path = None
         self.setup_auto_save()
+
+        self.is_ai_assist = False
+        self.file_structure = FileStructure(self.status_bar)
+        self.ai_assist = AIAssist(self.status_bar)
 
     def setup_image_viewer(self):
         self.scroll_area = QScrollArea(self)
@@ -62,11 +60,19 @@ class MainContentWidget(QWidget):
         self.bottom_right_layout.addWidget(self.create_structure_button)
 
         self.import_code_button = QPushButton("Import Code into File")
-        self.import_code_button.clicked.connect(self.select_file)
+        self.import_code_button.clicked.connect(self.import_code_into_file)
         self.bottom_right_layout.addWidget(self.import_code_button)
+
+        self.ai_assist_toggle = QCheckBox("AI Assist", self)
+        self.ai_assist_toggle.toggled.connect(self.toggle_ai_assist)
+        self.bottom_right_layout.addWidget(self.ai_assist_toggle)
 
         self.bottom_right_layout.addStretch()
         self.layout.addLayout(self.bottom_right_layout)
+
+    def toggle_ai_assist(self, checked):
+        self.is_ai_assist = checked
+        print(f"AI Assist toggled {'on' if self.is_ai_assist else 'off'}")
 
     def display_content(self, path):
         if path.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif')):
@@ -109,8 +115,35 @@ class MainContentWidget(QWidget):
         if self.current_file_path:
             self.save_code()
 
+    def import_code_into_file(self):
+        if self.is_ai_assist:
+            self.ai_import_code_into_file()
+        else:
+            if self.selected_file_path:
+                try:
+                    with open(self.selected_file_path, 'w', encoding='utf-8') as file:
+                        file.write(self.text_editor.toPlainText())
+                    self.status_bar.showMessage(f"Code imported into: {self.selected_file_path}")
+                except Exception as e:
+                    QMessageBox.critical(self, "Error", f"Could not import code into {self.selected_file_path}. Error: {e}")
+            else:
+                QMessageBox.warning(self, "No File Selected", "Please select a file from the directory tree to import code.")
+
+    def ai_import_code_into_file(self):
+        code = self.text_editor.toPlainText()
+        file_path = self.ai_assist.ai_import_code_into_file(code)
+        if file_path:
+            self.selected_file_path = file_path
+
+    def set_base_path(self, path):
+        self.file_structure.set_base_path(path)
+        self.ai_assist.set_base_path(path)  # Ensure AI Assist uses the same base path
+
+    def set_selected_file_path(self, path):
+        self.selected_file_path = path
+
     def select_file(self):
-        options = QFileDialog.Options()  # Corrected usage of QFileDialog.Options
+        options = QFileDialog.Option.DontUseNativeDialog
         file_path, _ = QFileDialog.getSaveFileName(self, "Select File to Save Code", "", "All Files (*);;Text Files (*.txt)", options=options)
         if file_path:
             self.current_file_path = file_path
@@ -118,23 +151,9 @@ class MainContentWidget(QWidget):
 
     def create_file_structure(self):
         structure = self.text_editor.toPlainText()
-        base_path = QDir.rootPath()  # Default to root path if no model is available
-        try:
-            for part in structure.split('\n'):
-                part = part.strip()
-                if part:
-                    command, *args = part.split()
-                    if command == "mkdir" and args:
-                        os.makedirs(os.path.join(base_path, args[0]), exist_ok=True)
-                    elif command == "touch" and args:
-                        open(os.path.join(base_path, args[0]), 'a').close()
-            self.status_bar.showMessage("File structure created successfully.")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Could not create file structure. Error: {e}")
-            self.status_bar.showMessage(f"Error creating file structure: {e}")
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec())
+        if self.is_ai_assist:
+            print("Using AI Assist to create file structure")  # Debugging
+            self.ai_assist.ai_create_file_structure(structure)
+        else:
+            print("Using manual method to create file structure")  # Debugging
+            self.file_structure.create_file_structure(structure)

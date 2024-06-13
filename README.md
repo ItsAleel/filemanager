@@ -1,6 +1,6 @@
 # File Manager
 
-A desktop file manager application built with Python 3.11.6 and PyQt5.
+A desktop file manager application built with Python 3.11.6 and PyQt6.
 
 ## Features
 
