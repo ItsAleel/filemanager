@@ -69,7 +69,7 @@ class ConsoleTab(QWidget):
             self.all_logs.clear()
 
     def save_logs(self):
-        options = QFileDialog.Options()
+        options = QFileDialog.Option()
         file_name, _ = QFileDialog.getSaveFileName(self, "Save Logs", "", "Text Files (*.txt);;All Files (*)", options=options)
         if file_name:
             with open(file_name, 'w', encoding='utf-8') as file:
@@ -86,6 +86,12 @@ class ConsoleTab(QWidget):
     def open_context_menu(self, position):
         menu = QMenu()
         copy_action = menu.addAction("Copy")
+        clear_selection_action = menu.addAction("Clear Selection")
+        select_all_action = menu.addAction("Select All")
         action = menu.exec(self.console.mapToGlobal(position))
         if action == copy_action:
             self.console.copy()
+        elif action == clear_selection_action:
+            self.console.textCursor().clearSelection()
+        elif action == select_all_action:
+            self.console.selectAll()
