@@ -1,3 +1,4 @@
+# src/utils/file_structure.py
 import os
 from typing import List
 from PyQt6.QtWidgets import QMessageBox
@@ -15,15 +16,15 @@ class FileStructure:
 
     def __init__(self, status_bar):
         self.status_bar = status_bar
-        self.base_path = None
+        self.current_directory = None
 
-    def set_base_path(self, path: str):
-        """Set the base path for creating the file structure.
+    def set_current_directory(self, path: str):
+        """Set the current directory for creating the file structure.
 
         Args:
-            path (str): The base path.
+            path (str): The current directory path.
         """
-        self.base_path = path
+        self.current_directory = path
 
     def create_file_structure(self, structure: str):
         """Create a file structure based on the input structure.
@@ -32,11 +33,11 @@ class FileStructure:
             structure (str): The input structure as a string.
 
         Raises:
-            FileStructureError: If the base path is not set.
+            FileStructureError: If the current directory is not set.
             InvalidStructureError: If the input structure is invalid.
         """
-        if not self.base_path:
-            raise FileStructureError("Base path is not set.")
+        if not self.current_directory:
+            raise FileStructureError("Current directory is not set.")
 
         try:
             if self.is_valid_structure(structure):
@@ -70,7 +71,7 @@ class FileStructure:
             InvalidStructureError: If the input structure is invalid.
         """
         lines = structure.split('\n')
-        stack = [self.base_path]
+        stack = [self.current_directory]
 
         for line in lines:
             line = line.rstrip()
@@ -167,9 +168,9 @@ class FileStructure:
                 continue
 
             if self._is_file(line):
-                path = os.path.join(self.base_path, line)
+                path = os.path.join(self.current_directory, line)
                 os.makedirs(os.path.dirname(path), exist_ok=True)
                 open(path, 'a').close()
             else:
-                path = os.path.join(self.base_path, line.rstrip('/'))
+                path = os.path.join(self.current_directory, line.rstrip('/'))
                 os.makedirs(path, exist_ok=True)

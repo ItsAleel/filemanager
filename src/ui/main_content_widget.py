@@ -1,3 +1,5 @@
+# src/ui/main_content_widget.py
+
 import os
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QTabWidget, QTextEdit, QPushButton, QLabel, QScrollArea,
                              QMessageBox, QFileDialog, QStatusBar, QHBoxLayout, QCheckBox)
@@ -143,6 +145,7 @@ class MainContentWidget(QWidget):
     def on_directory_selected(self, path):
         self.current_directory = path
         self.ai_assist.set_current_directory(path)  # Update the current directory in AI Assist
+        self.file_structure.set_current_directory(path)  # Update the current directory in FileStructure
 
     def select_file(self):
         options = QFileDialog.Option.DontUseNativeDialog
@@ -158,4 +161,5 @@ class MainContentWidget(QWidget):
             self.ai_assist.ai_create_file_structure(structure, self.current_directory)
         else:
             print("Using manual method to create file structure")  # Debugging
+            self.file_structure.set_current_directory(self.current_directory)
             self.file_structure.create_file_structure(structure)

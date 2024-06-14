@@ -1,4 +1,4 @@
-# tree_view_widget.py
+# src/ui/tree_view_widget.py
 
 import os
 from PyQt6.QtWidgets import QTreeView, QVBoxLayout, QWidget, QMenu, QInputDialog, QMessageBox, QLineEdit, QProgressBar
